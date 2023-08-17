@@ -7,10 +7,7 @@ import time
 connector = valpy.henrikdev.HenrikdevConnector()
 connector.add_synchronize_target(
     valpy.henrikdev.SynchronizeConfig(
-        name='dcmatos', tag='euw'))
-connector.add_synchronize_target(
-    valpy.henrikdev.SynchronizeConfig(
-        name='Beełzzz', tag='EUW'))
+        name='some player 123', tag='euw'))
 
 
 try:
