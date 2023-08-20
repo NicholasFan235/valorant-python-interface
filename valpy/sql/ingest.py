@@ -1,6 +1,5 @@
 from .connection import Connection
 from .config import IngestConfig
-import valpy.dataclasses
 import json
 import pathlib
 import pickle
@@ -22,20 +21,20 @@ class Ingest:
     def push_overviews(self, match_ids):
         self.db_conn.write_match_overviews(match_ids)
 
-    def push_match(self, match_data_file):
+    def push_match(self, match_data_file, factory, data_source=None):
         with open(match_data_file, 'r') as f:
-            match = valpy.MatchFactory.read(json.load(f)['data'])
+            match = factory.read(json.load(f))
         self.db_conn.write_match(match)
         match_file = pathlib.Path(IngestConfig.matches_folder, f'{match.match_id}.pkl')
         match_file.parent.mkdir(exist_ok=True, parents=True)
         with open(match_file, 'wb') as f:
             pickle.dump(match, f)
-        self.db_conn.add_data_links(match.match_id, match_data_file, match_file)
+        self.db_conn.add_data_links(match.match_id, match_data_file, match_file, data_source)
 
     def get_matches_to_collect(self, limit=10):
         return self.db_conn.get_matches_to_collect(limit)
     
-    def load_match_datas(self):
+    def load_match_datas(self, factory, data_source=None):
         for f in os.listdir(IngestConfig.match_data_folder):
-            self.push_match(pathlib.Path(IngestConfig.match_data_folder, f))
+            self.push_match(pathlib.Path(IngestConfig.match_data_folder, f), factory)
     

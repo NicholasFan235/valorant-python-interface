@@ -25,6 +25,7 @@ class Connection(requests.Session):
                 continue
             print(response.content)
             raise response.raise_for_status()
+        raise InterruptedError
 
     def get_json(self, endpoint):
         return self.get(endpoint).json()
@@ -40,7 +41,7 @@ class Connection(requests.Session):
         return self.get_json(endpoint)
 
     def get_lifetime_matches(self, region, name, tag, **kwargs):
-        query = '&'.join(f'{k}={v}' for k,v in kwargs.items())
+        query = '&'.join(f'{k}={v}' for k,v in filter(lambda p: p[1]!=None, kwargs.items()))
         endpoint = f'{self.url}/valorant/v1/lifetime/matches/{region}/{name}/{tag}'
         if query != '': endpoint += '?'+query
         return self.get_json(endpoint)

@@ -1,5 +1,6 @@
+from ....dataclasses._player_id import PlayerID
 import valpy
-from ...dataclasses._player_id import PlayerID
+
 
 class KillEventFactory:
     def read(data):

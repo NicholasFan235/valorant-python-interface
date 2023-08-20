@@ -1,5 +1,5 @@
 from .connection import Connection
-from .factories import MatchFactory
+from .factories.match_factory import MatchFactory
 import valpy.sql
 import json
 import pathlib
@@ -24,13 +24,13 @@ class Collect:
             for id in ids:
                 if id in self.ingest and not self.replace: continue
                 try:
-                    r = self.conn.get_match(id)
+                    r = self.conn.get_match_details(id)
                 except InterruptedError:
                     break
                 match_file = pathlib.Path(valpy.sql.IngestConfig.match_data_folder, f'{id}.json')
                 match_file.parent.mkdir(exist_ok=True, parents=True)
                 with open(match_file, 'w') as f:
                     json.dump(r, f)
-                self.ingest.push_match(match_file, MatchFactory, 'henrikdev')
+                self.ingest.push_match(match_file, MatchFactory, 'riotgames')
                 print(f'Collected {id}')
 

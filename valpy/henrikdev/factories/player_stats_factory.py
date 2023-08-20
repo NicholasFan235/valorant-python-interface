@@ -1,5 +1,5 @@
 import valpy
-from ..dataclasses._player_id import PlayerID
+from ...dataclasses._player_id import PlayerID
 
 
 class PlayerStatsFactory:
@@ -17,14 +17,12 @@ class PlayerStatsFactory:
                     PlayerID(event['receiver_puuid'],
                              event['receiver_display_name'],
                              event['receiver_team']),
-                    data['damage'],
-                    data['headshots'],
-                    data['bodyshots'],
-                    data['legshots']))
+                    event['damage'],
+                    event['headshots'],
+                    event['bodyshots'],
+                    event['legshots']))
         ps.add_economy(valpy.Economy(
             data['economy']['loadout_value'],
             data['economy']['weapon']['id'],
-            data['economy']['weapon']['name'],
-            data['economy']['armor']['id'],
-            data['economy']['armor']['name']))
+            data['economy']['armor']['id']))
         return ps

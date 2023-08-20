@@ -1,5 +1,6 @@
 import sqlite3
 import threading
+import datetime
 
 
 class Connection:
@@ -40,11 +41,11 @@ class Connection:
                                 start_time TIMESTAMP NOT NULL,
                                 duration TIMESTAMP NOT NULL,
                                 rounds INTEGER NOT NULL,
-                                mode TEXT NOT NULL,
                                 queue TEXT NOT NULL,
                                 outcome TEXT NOT NULL,
                                 data_link TEXT,
-                                match_link TEXT
+                                match_link TEXT,
+                                data_source TEXT
                             );
 
                             CREATE TABLE IF NOT EXISTS match_players (
@@ -56,10 +57,12 @@ class Connection:
                                 kills INTEGER NOT NULL,
                                 deaths INTEGER NOT NULL,
                                 assists INTEGER NOT NULL,
+                                party_id TEXT,
+                                rank INTEGER,
+                                rank_name TEXT,
 
 
                                 UNIQUE(player_id, match_id),
-                                UNIQUE(agent, team),
                                 FOREIGN KEY(player_id) REFERENCES players(id),
                                 FOREIGN KEY(match_id) REFERENCES matches(id)
                             );
@@ -81,44 +84,49 @@ class Connection:
             for player in match.players: self.write_player(player)
             with self.get_connection() as conn:
                 conn.execute('''
-                                INSERT INTO matches(id, map, start_time, duration, rounds, mode, queue, outcome)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                INSERT INTO matches(id, map, start_time, duration, rounds, queue, outcome)
+                                VALUES (?, ?, ?, ?, ?, ?, ?)
                                 ON CONFLICT DO UPDATE SET
                                     map = excluded.map,
                                     start_time = excluded.start_time,
                                     duration = excluded.duration,
                                     rounds = excluded.rounds,
-                                    mode = excluded.mode,
                                     queue = excluded.queue,
                                     outcome = excluded.outcome;
                             ''',
-                            (match.match_id, match.map, match.start_time, match.game_length, match.rounds_played, match.mode, match.queue, match.outcome))
+                            (match.match_id, match.map, datetime.datetime.timestamp(match.start_time), match.game_length, match.rounds_played, match.queue, match.outcome))
                 for player in match.players:
                     conn.execute('''
-                                        INSERT INTO match_players(player_id, match_id, team, agent, score, kills, deaths, assists)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                        INSERT INTO match_players(player_id, match_id, team, agent, score, kills, deaths, assists, party_id, rank, rank_name)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                         ON CONFLICT DO UPDATE SET
+                                            team = excluded.team,
+                                            agent = excluded.agent,
                                             score = excluded.score,
                                             kills = excluded.kills,
                                             deaths = excluded.deaths,
-                                            assists = excluded.assists;
+                                            assists = excluded.assists,
+                                            party_id = excluded.party_id,
+                                            rank = excluded.rank,
+                                            rank_name = excluded.rank_name;
                                     ''',
-                                    (player.id, match.match_id, player.team, player.character, player.score, player.kills, player.deaths, player.assists))
+                                    (player.id, match.match_id, player.team, player.character, player.score, player.kills, player.deaths, player.assists, player.party_id, player.rank, player.rank_name))
                 conn.execute('INSERT INTO match_overviews(id, retrieved) VALUES (?, true) ON CONFLICT (id)\
                              DO UPDATE SET retrieved = true;', (match.match_id,))
         except Exception as e:
             raise e
     
-    def add_data_links(self, match_id, data_file, match_file):
+    def add_data_links(self, match_id, data_file, match_file, data_source=None):
         try:
             with self.get_connection() as conn:
                 conn.execute('''
                                 UPDATE matches SET
                                     data_link = ?,
-                                    match_link = ?
+                                    match_link = ?,
+                                data_source = ?
                                 WHERE id = ?;
                             ''',
-                            (str(data_file), str(match_file), match_id))
+                            (str(data_file), str(match_file), str(data_source), match_id))
         except Exception as e:
             raise e
     

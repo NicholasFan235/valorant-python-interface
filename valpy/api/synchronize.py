@@ -12,30 +12,29 @@ class Synchronize:
         self.stop = stop if stop is not None else threading.Event()
 
     def run(self):
-        page = 1
+        start = 0
         match_ids = []
         while not self.stop.is_set():
-            #print(f'Synchronize page {page} for {self.cfg}')
+            print(f'Synchronize from {start} for {self.cfg}')
             try:
-                r = self.conn.get_lifetime_matches(
-                    self.cfg.region,
-                    self.cfg.name,
-                    self.cfg.tag,
-                    mode=self.cfg.mode,
-                    size=SynchronizeConfig.matches_per_page,
-                    page=page)
+                r = self.conn.get_match_history(
+                    player_id=self.cfg.player_id,
+                    start=start,
+                    stop=start + self.cfg.matches_per_page,
+                    queue=self.cfg.queue
+                )
             except InterruptedError:
                 continue
             
-            for d in r['data']:
-                match_ids.append(d['meta']['id'])
+            for d in r['History']:
+                match_ids.append(d['MatchID'])
             
             if len(match_ids) > 20:
                 self.ingest.push_overviews(match_ids)
                 match_ids = []
             
-            if r['results']['after'] > 0:
-                page += 1
+            if r['EndIndex'] < r['Total']:
+                start = r['EndIndex']
             else:
                 break
         print(f'Completed Synchronize for {self.cfg}')
