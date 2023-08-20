@@ -16,7 +16,7 @@ class SynchronizeConfig:
     tag:str
     queue:str = 'competitive'
 
-    matches_per_page=20
+    matches_per_page=25
 
     def __str__(self):
         return f'{self.name}#{self.tag} {self.queue}'

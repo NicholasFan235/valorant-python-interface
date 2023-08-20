@@ -29,7 +29,7 @@ class Synchronize:
             for d in r['History']:
                 match_ids.append(d['MatchID'])
             
-            if len(match_ids) > 20:
+            if len(match_ids) > 100:
                 self.ingest.push_overviews(match_ids)
                 match_ids = []
             
